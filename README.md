@@ -20,6 +20,8 @@ If "-" is specified as the datafile, input is read from stdin.
 - Line only with a 1 ("1\n") = Bit 1
 - Line only with a 0 ("0\n") = Bit 0
 
+An example can be found in ``data-example.txt``
+
 # Arduino example
 The arduino_dcf77_to_serial directory contains Arduino code that can be used to send the data coming from a DCF77 receiver module over serial to a PC. In this case the serial device file (e.g. /dev/ttyUSB0) can be specified as the datafile.
 

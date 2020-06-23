@@ -26,6 +26,15 @@
 // The first two digits of the year are not transmitted
 #define CENTURY "20"
 
+// The number of bits for each data segment
+#define SIZE_MINUTES 7
+#define SIZE_HOURS 6
+#define SIZE_DAY 6
+#define SIZE_WEEKDAY 3
+#define SIZE_MONTH 5
+#define SIZE_YEAR 8
+
+// Performs a parity check on the recieved data
 int parity_check( int* data, int size, int parity )
 {
 	int sum = 0;
@@ -36,6 +45,7 @@ int parity_check( int* data, int size, int parity )
 	return ((sum % 2) == !parity );
 }
 
+// Converts the BCD encoded data to an integer
 int bcd2dec( int* data, int size )
 {
 	int bcd_lookup[8] = {1, 2, 4, 8, 10, 20, 40, 80};
@@ -98,15 +108,16 @@ int main( int argc, char** argv )
 	}
 	
 	// decode received data
-	int counter = 0;
+	int counter = 0; // bit counter
 	
+	// these variables hold the raw data
 	int tz1 = 0, tz2 = 0;
-	int minutes[7];
-	int hours[6];
-	int day[6];
-	int weekday[3];
-	int month[5];
-	int year[8];
+	int minutes[SIZE_MINUTES];
+	int hours[SIZE_HOURS];
+	int day[SIZE_DAY];
+	int weekday[SIZE_WEEKDAY];
+	int month[SIZE_MONTH];
+	int year[SIZE_YEAR];
 	
 	// read input file line by line
 	while( 1 )
@@ -120,15 +131,19 @@ int main( int argc, char** argv )
 			break;
 		}
 		
+		// invalid line ?
+		if( line[0] != '0' && line[0] != '1' && line[0] != '\n' )
+			printf("Warning: Invalid line in input.\n");
+
 		// beginning of a minute ? → print time, reset counter
 		if( line[0] == '\n' ){
 			
 			// print date and time
-			int YY = bcd2dec(year, 8);
-			int MM = bcd2dec(month, 5);
-			int DD = bcd2dec(day, 6);
-			int hh = bcd2dec(hours, 6);
-			int mm = bcd2dec(minutes, 7);
+			int YY = bcd2dec(year, SIZE_YEAR);
+			int MM = bcd2dec(month, SIZE_MONTH);
+			int DD = bcd2dec(day, SIZE_DAY);
+			int hh = bcd2dec(hours, SIZE_HOURS);
+			int mm = bcd2dec(minutes, SIZE_MINUTES);
 			int tz = 0;
 			if( tz1 == 1 && tz2 == 0 )
 				tz = 2;
@@ -238,7 +253,7 @@ int main( int argc, char** argv )
 			else if( line[0] == '1' )
 				p = 1;
 			
-			if( parity_check(minutes, 7, p) )
+			if( parity_check(minutes, SIZE_MINUTES, p) )
 				printf("Warning: Parity check for the minutes failed.\n");
 			
 		// hour information	
@@ -260,7 +275,7 @@ int main( int argc, char** argv )
 			else if( line[0] == '1' )
 				p = 1;
 			
-			if( parity_check(hours, 6, p) )
+			if( parity_check(hours, SIZE_HOURS, p) )
 				printf("Warning: Parity check for the hours failed.\n");
 			
 		// day of the month
@@ -285,7 +300,7 @@ int main( int argc, char** argv )
 			
 			if( counter == 44 )
 			{
-				int wd = bcd2dec(weekday, 3);
+				int wd = bcd2dec(weekday, SIZE_WEEKDAY);
 				printf("Weekday (1 = Monday): %d\n", wd);
 			}
 			
@@ -319,26 +334,27 @@ int main( int argc, char** argv )
 				p = 1;
 			
 			// concatenate all date fields
-			int date[22];
+			int size_date = SIZE_DAY + SIZE_WEEKDAY + SIZE_MONTH + SIZE_YEAR;
+			int date[size_date];
 			int d = 0;
-			for( int i = 0; i < 6; i++ ){
+			for( int i = 0; i < SIZE_DAY; i++ ){
 				date[d] = day[i];
 				d++;
 			}
-			for( int i = 0; i < 3; i++ ){
+			for( int i = 0; i < SIZE_WEEKDAY; i++ ){
 				date[d] = weekday[i];
 				d++;
 			}
-			for( int i = 0; i < 5; i++ ){
+			for( int i = 0; i < SIZE_MONTH; i++ ){
 				date[d] = month[i];
 				d++;
 			}
-			for( int i = 0; i < 8; i++ ){
+			for( int i = 0; i < SIZE_YEAR; i++ ){
 				date[d] = year[i];
 				d++;
 			}
 			
-			if( parity_check(date, 22, p) )
+			if( parity_check(date, size_date, p) )
 				printf("Warning: Parity check for the date failed.\n");
 		
 		// leap second
@@ -351,7 +367,7 @@ int main( int argc, char** argv )
 		// increment bit counter
 		counter++;
 		
-	}
+	} // end of while(1)
 	
 	// close input file
 	fclose(input);
